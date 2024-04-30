@@ -1,0 +1,135 @@
+⚡ The Winston package is used for logging in Node.js applications. It provides a flexible and customizable logging framework that allows you to log messages at different levels (such as info, warn, error) and direct them to various transports (such as console, file, database). Some key features and uses of the Winston package include:
+
+1. Logging Levels: Winston supports different logging levels like info, warn, error, debug, etc., allowing you to categorize and prioritize your log messages based on their severity.
+2. Transports: It provides built-in transports to handle logging to console, files, databases, HTTP endpoints, and more. This flexibility allows you to send log messages to multiple destinations simultaneously.
+3. Customization: Winston allows you to customize log formats, timestamps, and log message metadata according to your application's needs.
+4. Streaming: You can stream logs in real-time to different destinations, making it suitable for real-time monitoring and debugging.
+5. Error Handling: Winston includes features for handling uncaught exceptions and logging stack traces, helping you debug and analyze errors effectively.
+6. Integration: It integrates well with other Node.js frameworks and libraries, making it a popular choice for logging in a wide range of applications.
+
+
+
+⚡ Types of Winston Levels...
+Winston logging levels indicate the severity or importance of a log message. Each level corresponds to a numerical value, where lower numbers represent more severe levels and higher numbers represent less severe levels. Here's what each level typically signifies:
+
+1. error (0): Indicates critical errors that require immediate attention. These are usually issues that can cause the application to crash or behave unexpectedly.
+2. warn (1): Represents warnings or potential issues that should be investigated. These are not critical errors but may indicate problems that need attention.
+3. info (2): General informational messages about the application's operation. This level is used for logging routine activities and progress updates.
+4. http (3): Specifically used for HTTP request/response logging. It's often used to log details about HTTP requests, such as method, URL, and response status.
+5. verbose (4): More detailed than info level, providing additional information for debugging or troubleshooting purposes. It can include detailed function calls or process information.
+6. debug (5): Detailed debugging information that is typically used during development and debugging phases. It includes information useful for identifying issues during development.
+7. silly (6): The least severe level, used for extremely detailed or verbose logging. It includes all levels of logging, even trivial or inconsequential details.
+
+
+
+⚡ Your code sets up a logger with custom logging levels and a File transport to store logs in a specific file. 
+It also defines a logger middleware for your Express application to log request details and response status codes with timestamps using the 'verbose' level.
+
+* If your goal is to log detailed information at the 'verbose' level, your code looks good as it is. 
+  However, if you want to add more functionality or customize the logging behavior further, here are a few suggestions:
+
+* Depending on your application's needs, you can adjust the logging levels for different transports. 
+  For example, you might want to log certain messages at a higher level (e.g., 'info' or 'warn') to the console for immediate attention while logging detailed information ('verbose' or 'debug') to the file.
+
+const consoleTransport = new transports.Console({ level: 'info' }); // Log 'info' level messages to console
+const fileTransport = new transports.File({ level: 'verbose' }); // Log 'verbose' level messages to file
+
+
+⚡ Customize Log Format (Optional):
+You can customize the log format using Winston's formatting options. This allows you to add additional metadata or structure to your log messages.
+
+
+const customFormat = format.combine(
+    format.timestamp({ format: 'MM-DD-YYYY HH:mm:ss' }),
+    format.printf(({ timestamp, level, message, body }) => {
+        return `${timestamp} [${level.toUpperCase()}] ${message} ${body ? JSON.stringify(body) : ''}`;
+    })
+);
+
+const fileTransport = new transports.File({
+    filename: 'WinstonLogs/ServerLogs.log',
+    level: 'verbose',
+    format: customFormat // Use custom log format
+});
+
+
+👉 Explanation of above code :-
+
+format.timestamp({ format: 'MM-DD-YYYY HH:mm:ss' }):
+This part of the format adds a timestamp to each log message with the specified format, which is 'MM-DD-YYYY HH:mm:ss' in your case. This format represents the month, day, year, and time in hours, minutes, and seconds.
+format.printf(({ timestamp, level, message, body }) => {...}):
+This is a custom printf-style formatter that defines how each log message should be formatted. It takes an object containing properties like timestamp, level, message, and body (if available) and returns a formatted string.
+${timestamp}: Inserts the timestamp in the specified format.
+[${level.toUpperCase()}]: Inserts the log level in uppercase (e.g., INFO, VERBOSE).
+${message}: Inserts the log message itself.
+${body ? JSON.stringify(body) : ''}: Checks if there's a body property in the log object. If present, it converts the body to a JSON string; otherwise, it inserts an empty string.
+The format.printf function allows you to define a custom template for log messages, including how timestamp, level, message, and additional data (if provided) should be formatted and displayed in the log file.
+
+
+
+⚡ Logger with Configure method...
+
+1. Initial Logger Configuration:
+const logger = winston.createLogger({
+    level: 'info',
+    transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'combined.log' })
+    ]
+});
+
+👉 Explanation.
+This sets up a logger with two transports:
+Console transport: Logs messages to the console.
+File transport: Logs messages to a file named 'combined.log'.
+The default logging level is set to 'info', meaning it will log messages with a severity level of 'info' or higher.
+
+
+2. Reconfiguration with logger.configure:
+const DailyRotateFile = require('winston-daily-rotate-file');
+logger.configure({
+    level: 'verbose',
+    transports: [
+        new DailyRotateFile(opts)
+    ]
+});
+
+👉 Explanation.
+This reconfigures the logger to use a new transport (DailyRotateFile) and updates the logging level to 'verbose'.
+The DailyRotateFile transport is typically used for log rotation, where log files are rotated based on specified criteria (e.g., daily, hourly).
+The opts variable contains configuration options for the DailyRotateFile transport, such as the log file name pattern, rotation frequency, etc.
+
+
+⚡ What is child logger..?
+
+// Create the parent logger...
+const logger = createLogger({
+    levels: customLevels,
+    transports: [
+        new transports.File({
+            filename: 'WinstonLogs/ServerLogs.log',
+            level: 'verbose',
+            format: customFormat
+        })
+    ]
+});
+
+// Create a child logger with additional metadata...
+const childLogger = logger.child({ module: 'exampleModule' });
+
+
+👉 Explanation.
+We create a parent logger (logger) as before.
+We create a child logger (childLogger) by calling logger.child({ module: 'exampleModule' }). 
+This child logger inherits the settings and transports from the parent but can have its own additional metadata, such as the module name in this case.
+The loggerMiddleware function uses the child logger (childLogger) for logging. 
+This allows you to differentiate logs originating from this middleware or specific parts of your application.
+
+
+👉 Benefits of using child loggers:
+
+Contextual Logging: You can add specific metadata to child loggers, making it easier to trace logs back to their source or context (e.g., request ID, module name).
+Separation of Concerns: Child loggers can be used to separate logs based on different parts or components of your application, improving log organization and readability.
+Inheritance: Child loggers inherit settings and transports from their parent, reducing duplication and ensuring consistent logging behavior across your application.
+
+
