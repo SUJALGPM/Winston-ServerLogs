@@ -3,7 +3,7 @@ const winstonMongoDB = require('winston-mongodb');
 
 
 //Mongodb connection url...
-const MONGO_URL = "mongodb+srv://root:root@concept-basic.2srtcjo.mongodb.net/Modern?retryWrites=true&w=majority&appName=Concept-Basic"
+const MONGO_URL = "MONGODB LINK"
 
 
 // Define custom logging levels...
